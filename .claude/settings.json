@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\sketch-explainer\\\\scripts\\\\generate_image.ps1\" -TopicSlug \"wealth-creation\" -PromptFile \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\sketch-explainer\\\\generated-images\\\\wealth-creation-prompt.txt\")",
+      "Edit(/.claude/skills/sketch-explainer/**)"
+    ]
+  }
+}
