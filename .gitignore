@@ -1,0 +1,21 @@
+# API keys — never commit
+config.env
+.env
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# Generated image output
+.claude/skills/sketch-explainer/generated-images/
+
+# Eval workspace (test artifacts)
+.claude/skills/sketch-explainer-workspace/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db

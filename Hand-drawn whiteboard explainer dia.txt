@@ -1,0 +1,15 @@
+Hand-drawn whiteboard explainer diagram titled "How to Crack a Joke" in large, slightly wobbly hand-lettered text at the top of the image. Five horizontal pastel color bands stacked vertically on a bright white background, each representing one layer of joke mechanics. The overall aesthetic is like a smart, funny teacher sketched this during a lecture — clean but informal, educational and a little playful, with slightly imperfect lines and friendly lettering.
+
+On the far left, a vertical curly bracket spans all five bands with a label at the top reading "Audience sees this ↑" and at the bottom "Comedian knows this ↓" in small italic handwritten text.
+
+Band 1 — salmon/peach (#F4A896): Bold left-aligned label: "THE PUNCHLINE". Three white rounded-rectangle chips inside: [lightning bolt icon] "The Twist", [star-burst icon] "Unexpected Word", [bullseye icon] "The Payoff". Below the band in small italic text: "The moment everything clicks — the surprise that makes it land."
+
+Band 2 — soft yellow (#F7E08A): Bold label: "THE SETUP". Three chips: [speech bubble icon] "The Premise", [arrow curving left icon] "The Misdirection", [path icon] "The Lead-In". Caption: "You're building a road — but pointing the audience the wrong way on purpose."
+
+Band 3 — sage green (#A8D5A2): Bold label: "TIMING". Three chips: [clock icon] "The Pause", [metronome icon] "The Beat", [waveform icon] "Delivery Speed". Caption: "The same joke told a half-second too early or late? Dead silence."
+
+Band 4 — slate blue (#A8C5DA): Bold label: "AUDIENCE READ". Three chips: [magnifying glass icon] "Who's in the Room", [Venn diagram icon] "Shared Context", [radar icon] "Relatability Scan". Caption: "You're calibrating invisibly — what they know, what they've lived, what they'll get."
+
+Band 5 — lavender/purple (#C5B8E8): Bold label: "THE COMEDIAN'S BRAIN". Three chips: [gear icon] "Pattern Recognition", [tangled arrow icon] "Subvert Expectations", [lightbulb with question mark icon] "Find the Absurd". Caption: "Jokes aren't random — they're structured violations of what the brain predicted."
+
+Overall mood: like a comedy writer and a professor collaborated on a napkin. Informal, clever, slightly self-aware. Sketch icons are minimal line-art. White rounded chips have a thin hand-drawn border. Pastel bands have soft, slightly uneven edges.

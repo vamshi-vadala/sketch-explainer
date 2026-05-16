@@ -1,0 +1,114 @@
+{
+  "skill_name": "sketch-explainer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Give me a sketch explainer for how JWT authentication works",
+      "expected_output": "A structured diagram spec with 3-5 swim lanes (e.g. CLIENT, TOKEN, SERVER VERIFICATION, CLAIMS/PAYLOAD, EXPIRY) plus an AI image prompt in the Excalidraw whiteboard style with pastel colors and pill boxes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "has-both-output-sections",
+          "description": "Output contains both a Diagram Spec section and an AI Image Prompt section (or clearly labeled equivalents)",
+          "type": "llm"
+        },
+        {
+          "name": "has-3-to-6-lanes",
+          "description": "The diagram spec contains between 3 and 6 swim lanes",
+          "type": "llm"
+        },
+        {
+          "name": "lanes-use-bold-uppercase-labels",
+          "description": "Each swim lane has a bold uppercase label of 4 words or fewer",
+          "type": "llm"
+        },
+        {
+          "name": "jwt-concepts-present",
+          "description": "JWT-specific concepts appear in the spec: at minimum token, claims or payload, and signature or verify",
+          "type": "llm"
+        },
+        {
+          "name": "ai-prompt-has-style-keywords",
+          "description": "The AI image prompt contains at least 3 of: Excalidraw, Virgil, swim lanes, pastel, pill boxes, whiteboard",
+          "type": "llm"
+        },
+        {
+          "name": "boxes-have-emoji",
+          "description": "Concept boxes in the diagram spec each include an emoji icon alongside the label",
+          "type": "llm"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Can you make a whiteboard-style diagram explaining how photosynthesis works?",
+      "expected_output": "A structured diagram spec with 3-5 swim lanes organized as phases or components (e.g. SUNLIGHT INPUT, CHLOROPLAST, LIGHT REACTIONS, CALVIN CYCLE, OUTPUTS) plus an AI image prompt matching the Excalidraw sketch style.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "has-both-output-sections",
+          "description": "Output contains both a Diagram Spec section and an AI Image Prompt section",
+          "type": "llm"
+        },
+        {
+          "name": "has-3-to-6-lanes",
+          "description": "The diagram spec contains between 3 and 6 swim lanes",
+          "type": "llm"
+        },
+        {
+          "name": "photosynthesis-concepts-present",
+          "description": "Core photosynthesis concepts appear: at minimum sunlight or light, chloroplast or chlorophyll, glucose or sugar, and oxygen",
+          "type": "llm"
+        },
+        {
+          "name": "lanes-phase-based-not-layer-based",
+          "description": "Lanes are organized as phases or processes (e.g. light input → reaction → output) rather than system layers, reflecting the non-technical classification",
+          "type": "llm"
+        },
+        {
+          "name": "ai-prompt-has-style-keywords",
+          "description": "The AI image prompt contains at least 3 of: Excalidraw, Virgil, swim lanes, pastel, pill boxes, whiteboard",
+          "type": "llm"
+        },
+        {
+          "name": "boxes-have-emoji",
+          "description": "Concept boxes in the diagram spec each include an emoji icon",
+          "type": "llm"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Sketch explainer: how does a startup raise a Series A?",
+      "expected_output": "A structured diagram spec with 3-5 swim lanes organized as phases or stakeholders (e.g. FOUNDERS, TRACTION, PITCH, TERM SHEET, CLOSE) plus an AI image prompt in the whiteboard sketch style.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "has-both-output-sections",
+          "description": "Output contains both a Diagram Spec section and an AI Image Prompt section",
+          "type": "llm"
+        },
+        {
+          "name": "has-3-to-6-lanes",
+          "description": "The diagram spec contains between 3 and 6 swim lanes",
+          "type": "llm"
+        },
+        {
+          "name": "startup-concepts-present",
+          "description": "Startup fundraising concepts appear: at minimum traction or metrics, pitch or deck, and term sheet or investors or VCs",
+          "type": "llm"
+        },
+        {
+          "name": "ai-prompt-has-style-keywords",
+          "description": "The AI image prompt contains at least 3 of: Excalidraw, Virgil, swim lanes, pastel, pill boxes, whiteboard",
+          "type": "llm"
+        },
+        {
+          "name": "boxes-have-emoji",
+          "description": "Concept boxes in the diagram spec each include an emoji icon",
+          "type": "llm"
+        }
+      ]
+    }
+  ]
+}
