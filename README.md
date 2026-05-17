@@ -1,14 +1,14 @@
 # Sketch Explainer — Claude Code Skill
 
-A Claude Code skill that turns any topic into a whiteboard-style explainer diagram and AI image prompt.
+A Claude Code skill that turns any topic into a whiteboard-style explainer diagram and AI image, using a two-skill architecture: **sketch-explainer** builds the diagram spec and prompt, **image-generator** produces the image.
 
-## What it does
+## Skills
 
-Give it a topic, and it automatically:
-1. Chooses the best diagram format based on the topic's natural structure
-2. Produces a structured **Diagram Spec** — every lane, step, node, or cell
-3. Produces an **AI Image Prompt** ready to paste into Midjourney, DALL-E, or Excalidraw AI
-4. Optionally generates the image directly using the Gemini API
+### sketch-explainer
+Chooses the best diagram format for a topic, produces a structured Diagram Spec and AI Image Prompt, then calls the image-generator skill to create the image.
+
+### image-generator
+Standalone image generation skill. Accepts a topic slug and prompt, calls the Gemini API, and saves the image to disk. Can be called independently by any skill or agent.
 
 ## Diagram Formats
 
@@ -16,7 +16,7 @@ Give it a topic, and it automatically:
 |---|---|
 | **Swim Lanes** | Layered systems, protocol stacks (DNS, HTTPS, JWT) |
 | **Flowchart** | Decisions, branching logic, troubleshooting |
-| **Linear Steps** | How-to guides, tutorials, step-by-step skills |
+| **Linear Steps** | How-to guides, tutorials, step-by-step processes |
 | **Grid / Matrix** | Comparisons, pros/cons, 2×2 frameworks |
 | **Wheel / Radial** | Cycles, feedback loops, hub + attributes |
 | **Timeline** | History, project phases, chronological progression |
@@ -30,28 +30,58 @@ All formats use the same Excalidraw whiteboard aesthetic:
 - Pastel color palette: Mint · Gold · Orange · Blue · Lavender
 - Emoji icon boxes with hand-drawn borders
 
-## Image Generation
+## Setup
 
-The skill can generate images automatically using the Gemini API (`gemini-3.1-flash-image-preview`).
+### 1. Add your Gemini API key
 
-**Setup:**
-1. Add your Gemini API key to `.claude/skills/sketch-explainer/config.env`
-2. Run the generation script after producing a prompt:
+Create `.claude/skills/config.env` (shared across all skills — never commit this file):
 
-```powershell
-& ".claude\skills\sketch-explainer\scripts\generate_image.ps1" -TopicSlug "your-topic" -PromptFile "path\to\prompt.txt"
+```
+GEMINI_API_KEY=your-key-here
 ```
 
-> Requires billing enabled on your Google AI account for image generation.
+Get a key at [aistudio.google.com](https://aistudio.google.com). Image generation requires billing enabled on your Google Cloud project.
+
+### 2. Use the skill
+
+```
+/sketch-explainer wealth creation
+/sketch-explainer will AI take over humanity
+/sketch-explainer how JWT authentication works
+```
+
+To generate an image independently:
+
+```
+/image-generator
+topic-slug: my-topic
+prompt: <your full image prompt>
+```
 
 ## Example Topics
 
-- `how JWT authentication works` → Swim Lanes
-- `how to crack a joke on stage` → Linear Steps
-- `wealth creation` → Iceberg
-- `should I use microservices` → Flowchart
-- `the water cycle` → Wheel / Radial
-- `history of the internet` → Timeline
+| Topic | Format chosen |
+|---|---|
+| `how JWT authentication works` | Swim Lanes |
+| `how to crack a joke on stage` | Linear Steps |
+| `wealth creation` | Iceberg |
+| `will AI take over humanity` | Flowchart |
+| `the water cycle` | Wheel / Radial |
+| `history of the internet` | Timeline |
+
+## File Structure
+
+```
+.claude/skills/
+  config.env                        ← shared API keys (gitignored, never commit)
+  sketch-explainer/
+    SKILL.md
+    references/                     ← format specs (flowchart, iceberg, etc.)
+  image-generator/
+    SKILL.md
+    scripts/
+      generate_image.ps1            ← Gemini API caller (PowerShell, no deps)
+```
 
 ## Reference Image
 
