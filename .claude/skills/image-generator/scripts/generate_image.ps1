@@ -13,20 +13,28 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# --- Resolve API key from config.env ---
-$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.env"
+# --- Resolve API key: skill-local config.env → shared skills config.env → env var ---
+$skillDir = Split-Path $PSScriptRoot -Parent
+$sharedDir = Split-Path $skillDir -Parent
+$configCandidates = @(
+    (Join-Path $skillDir "config.env"),   # skill-local override
+    (Join-Path $sharedDir "config.env")   # shared across all skills
+)
 $apiKey = ""
-if (Test-Path $configPath) {
-    foreach ($line in Get-Content $configPath) {
-        if ($line -match "^GEMINI_API_KEY=(.+)$") {
-            $val = $matches[1].Trim()
-            if ($val -ne "your-api-key-here") { $apiKey = $val }
+foreach ($configPath in $configCandidates) {
+    if (Test-Path $configPath) {
+        foreach ($line in Get-Content $configPath) {
+            if ($line -match "^GEMINI_API_KEY=(.+)$") {
+                $val = $matches[1].Trim()
+                if ($val -and $val -ne "your-api-key-here") { $apiKey = $val; break }
+            }
         }
     }
+    if ($apiKey) { break }
 }
 if (-not $apiKey) { $apiKey = $env:GEMINI_API_KEY }
 if (-not $apiKey) {
-    Write-Error "GEMINI_API_KEY not found. Set it in config.env or as an env var."
+    Write-Error "GEMINI_API_KEY not found. Set it in .claude/skills/config.env or as an env var."
     exit 1
 }
 

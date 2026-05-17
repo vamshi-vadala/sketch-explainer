@@ -7,6 +7,11 @@ config.env
 
 # Generated image output
 .claude/skills/sketch-explainer/generated-images/
+.claude/skills/image-generator/generated-images/
+
+# Shared skills API keys
+.claude/skills/config.env
+.claude/skills/*/config.env
 
 # Eval workspace (test artifacts)
 .claude/skills/sketch-explainer-workspace/

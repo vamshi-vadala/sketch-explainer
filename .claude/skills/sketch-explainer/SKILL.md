@@ -52,21 +52,16 @@ Produce two clearly separated sections following the reference file's output for
 
 ## Step 4: Generate the Image
 
-After writing the output, save the Part 2 prompt to a file and run the PowerShell script:
+After writing the output, invoke the `image-generator` skill using the Skill tool:
 
-```powershell
-# 1. Save the prompt (replace <topic-slug> with e.g. wealth-creation)
-Set-Content -Path "e:\ClaudeCode\.claude\skills\sketch-explainer\generated-images\<topic-slug>-prompt.txt" -Value @'
-<paste the full AI Image Prompt from Part 2 here>
-'@ -Encoding UTF8
-
-# 2. Generate the image
-& "e:\ClaudeCode\.claude\skills\sketch-explainer\scripts\generate_image.ps1" -TopicSlug "<topic-slug>" -PromptFile "e:\ClaudeCode\.claude\skills\sketch-explainer\generated-images\<topic-slug>-prompt.txt"
+```
+skill: image-generator
+args:
+  topic-slug: <topic-slug>
+  prompt: <full Part 2 AI Image Prompt>
 ```
 
-The image saves to `generated-images/<topic-slug>-<timestamp>.png`.
-
-**Requirements:** `GEMINI_API_KEY` set in `config.env`. Image generation requires billing enabled on your Google AI account.
+The image-generator skill handles saving the prompt, calling the API, and returning the saved image path.
 
 Tell the user the saved image path when done.
 
