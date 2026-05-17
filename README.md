@@ -13,6 +13,9 @@ Standalone image generation skill. Accepts a topic slug and prompt, calls the Ge
 ### linkedin-post
 Researches any topic on the internet first, then writes a professional LinkedIn post with a strong hook, insightful body, hyphen bullets, proper spacing, and up to 3 hashtags. Never writes before researching.
 
+### social-media-agent
+Full LinkedIn content pipeline in one command. Given a topic, it researches, writes a post, generates a whiteboard diagram image, and publishes or schedules to LinkedIn. Supports `--no-image`, `--draft`, `--schedule`, `--timezone`, and `--tone` flags.
+
 ### linkedin-post-creator
 Publishes and schedules LinkedIn posts via the Zernio API. Supports text-only posts, image posts, and scheduled publishing. Pass a **local image file path** and the script automatically commits it to `assets/linkedin/` in the GitHub repo and uses the raw URL — no manual hosting required. Account ID and API keys are stored in the shared gitignored config.
 
@@ -57,6 +60,13 @@ Copy the LinkedIn account ID into `config.env`.
 ### 3. Use the skills
 
 ```
+# Full pipeline — one command does everything
+/social-media-agent AI taking over jobs
+/social-media-agent Web3 is dead --no-image
+/social-media-agent future of remote work --schedule "2026-05-20T09:00:00" --timezone "Asia/Kolkata"
+/social-media-agent quantum computing --draft
+
+# Individual skills
 /sketch-explainer wealth creation
 /sketch-explainer will AI take over humanity
 
