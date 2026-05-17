@@ -91,22 +91,25 @@ Copy the LinkedIn account ID into `config.env`.
 ```
 assets/
   linkedin/                             ← generated images committed here for public GitHub URLs
-.claude/skills/
-  config.env                            ← shared API keys (gitignored, never commit)
-  sketch-explainer/
-    SKILL.md
-    references/                         ← format specs (flowchart, iceberg, etc.)
-  image-generator/
-    SKILL.md
-    scripts/
-      generate_image.ps1                ← Gemini API caller
-  linkedin-post/
-    SKILL.md                            ← research + write LinkedIn posts
-  linkedin-post-creator/
-    SKILL.md
-    scripts/
-      list_accounts.ps1                 ← find your LinkedIn account ID
-      post_linkedin.ps1                 ← publish or schedule via Zernio (-ImagePath auto-pushes to GitHub)
+.claude/
+  agents/
+    social-media-agent.md               ← orchestrator agent (research + image + publish)
+  skills/
+    config.env                          ← shared API keys (gitignored, never commit)
+    sketch-explainer/
+      SKILL.md
+      references/                       ← format specs (flowchart, iceberg, etc.)
+    image-generator/
+      SKILL.md
+      scripts/
+        generate_image.ps1              ← Gemini API caller
+    linkedin-post/
+      SKILL.md                          ← research + write LinkedIn posts
+    linkedin-post-creator/
+      SKILL.md
+      scripts/
+        list_accounts.ps1               ← find your LinkedIn account ID
+        post_linkedin.ps1               ← publish or schedule via Zernio (-ImagePath auto-pushes to GitHub)
 ```
 
 ## Reference Image

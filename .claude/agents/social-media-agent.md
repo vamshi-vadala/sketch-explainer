@@ -2,11 +2,10 @@
 name: social-media-agent
 description: Full LinkedIn content pipeline — researches a topic, writes a professional
   post, generates a whiteboard diagram image, and publishes or schedules to LinkedIn.
-  Use this skill whenever the user wants to create AND post content to LinkedIn in one
+  Use this agent whenever the user wants to create AND post content to LinkedIn in one
   go, or says things like "post about", "write and publish", "create a LinkedIn post on",
-  "schedule a post about", or invokes it directly as /social-media-agent. Supports
-  --no-image (text-only), --draft (write but don't publish), --schedule, --timezone,
-  and --tone flags.
+  "schedule a post about". Supports --no-image (text-only), --draft (write but don't
+  publish), --schedule, --timezone, and --tone flags.
 ---
 
 # Social Media Agent
@@ -90,8 +89,8 @@ On success, report the post ID and whether the post was published immediately or
 
 | Invocation | What happens |
 |---|---|
-| `/social-media-agent quantum computing` | Research → post + image → publish now |
-| `/social-media-agent Web3 is dead --no-image` | Research → post → publish now (no image) |
-| `/social-media-agent future of AI --draft` | Research → post + image → show draft only |
-| `/social-media-agent remote work --schedule "2026-05-20T09:00:00" --timezone "Asia/Kolkata"` | Research → post + image → schedule |
-| `/social-media-agent burnout --tone bold --no-image` | Bold tone → post → publish now |
+| `social-media-agent quantum computing` | Research → post + image → publish now |
+| `social-media-agent Web3 is dead --no-image` | Research → post → publish now (no image) |
+| `social-media-agent future of AI --draft` | Research → post + image → show draft only |
+| `social-media-agent remote work --schedule "2026-05-20T09:00:00" --timezone "Asia/Kolkata"` | Research → post + image → schedule |
+| `social-media-agent burnout --tone bold --no-image` | Bold tone → post → publish now |
