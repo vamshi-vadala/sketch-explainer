@@ -2,7 +2,43 @@
   "permissions": {
     "allow": [
       "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\sketch-explainer\\\\scripts\\\\generate_image.ps1\" -TopicSlug \"wealth-creation\" -PromptFile \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\sketch-explainer\\\\generated-images\\\\wealth-creation-prompt.txt\")",
-      "Edit(/.claude/skills/sketch-explainer/**)"
+      "Edit(/.claude/skills/sketch-explainer/**)",
+      "Edit(/.claude/skills/image-generator/**)",
+      "Skill(image-generator)",
+      "Skill(image-generator:*)",
+      "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\image-generator\\\\scripts\\\\generate_image.ps1\" -TopicSlug \"config-test\" -Prompt \"A simple whiteboard sketch of a green checkmark in Excalidraw style, Virgil font, clean white background, hand-drawn border, no gradients.\")",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Skill(skill-creator)",
+      "Skill(skill-creator:*)",
+      "Skill(linkedin-post)",
+      "Skill(linkedin-post:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.zernio.com)",
+      "Edit(/.claude/skills/linkedin-post-creator/**)",
+      "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\linkedin-post-creator\\\\scripts\\\\list_accounts.ps1\")",
+      "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\linkedin-post-creator\\\\scripts\\\\post_linkedin.ps1\" -Content \"Quick config test - account ID now loaded automatically from config.env.\")",
+      "Bash(git commit -m 'Refactor: auto-publish local images to GitHub for LinkedIn posts *)",
+      "Bash(mkdir -p \"e:/AI Catalyst/Claudecode/sketch-explainer/.claude/skills/social-media-agent\")",
+      "Edit(/.claude/skills/social-media-agent/**)",
+      "Bash(git remote *)",
+      "Bash(git commit -m 'Add social-media-agent skill: full LinkedIn pipeline in one command *)",
+      "Bash(cat \"C:/Users/P c/.claude/settings.json\" 2>/dev/null || echo \"not found\")",
+      "Read(//c/Users/P c/.claude/**)",
+      "Bash(mkdir -p \"e:/AI Catalyst/Claudecode/sketch-explainer/.claude/agents\")",
+      "Bash(git commit -m 'Move social-media-agent from skills/ to agents/ *)",
+      "Bash(New-Item -ItemType Directory -Force \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\image-generator\\\\generated-images\\\\\" | Out-Null; Write-Output \"Directory ready\")",
+      "PowerShell(& \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\image-generator\\\\scripts\\\\generate_image.ps1\" -TopicSlug \"ai-agents-2025\" -PromptFile \"e:\\\\AI Catalyst\\\\Claudecode\\\\sketch-explainer\\\\.claude\\\\skills\\\\image-generator\\\\generated-images\\\\ai-agents-2025-prompt.txt\")",
+      "Bash(git commit *)"
+    ],
+    "additionalDirectories": [
+      "e:\\AI Catalyst\\Claudecode\\sketch-explainer\\.claude\\skills\\sketch-explainer\\scripts",
+      "e:\\AI Catalyst\\Claudecode\\sketch-explainer\\.claude\\skills\\image-generator",
+      "e:\\AI Catalyst\\Claudecode\\sketch-explainer\\.claude\\skills",
+      "e:\\AI Catalyst\\Claudecode\\sketch-explainer\\.claude",
+      "e:\\AI Catalyst\\Claudecode\\sketch-explainer\\.claude\\skills\\image-generator\\generated-images"
     ]
   }
 }
