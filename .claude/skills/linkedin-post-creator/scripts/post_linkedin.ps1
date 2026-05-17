@@ -3,13 +3,18 @@
 # Usage:
 #   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text"
 #   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text" -ImageUrl "https://..."
+#   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text" -ImagePath "C:\path\to\image.png"
 #   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text" -ScheduledFor "2026-05-20T14:00:00" -Timezone "Asia/Kolkata"
-#   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text" -ImageUrl "https://..." -ScheduledFor "2026-05-20T14:00:00" -Timezone "UTC"
+#   .\post_linkedin.ps1 -AccountId "<id>" -Content "Post text" -ImagePath "C:\path\to\image.png" -ScheduledFor "2026-05-20T14:00:00" -Timezone "UTC"
+#
+# ImagePath: local file path — automatically committed to GitHub and converted to a raw public URL.
+# ImageUrl:  already-public URL — used directly.
 
 param(
     [string]$AccountId,
     [Parameter(Mandatory)][string]$Content,
     [string]$ImageUrl,
+    [string]$ImagePath,
     [string]$ScheduledFor,
     [string]$Timezone = "UTC"
 )
@@ -52,6 +57,49 @@ if (-not $AccountId) {
     exit 1
 }
 
+# --- Publish local image to GitHub and resolve public URL ---
+if ($ImagePath) {
+    if (-not (Test-Path $ImagePath)) {
+        Write-Error "ImagePath not found: $ImagePath"
+        exit 1
+    }
+
+    # Find repo root and remote URL
+    $repoRoot = & git -C $PSScriptRoot rev-parse --show-toplevel 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Error "Not inside a git repo — cannot publish image"; exit 1 }
+
+    $remoteUrl = & git -C $repoRoot remote get-url origin 2>&1
+    if ($remoteUrl -match "github\.com[:/](.+?)(?:\.git)?$") {
+        $ownerRepo = $matches[1]
+    } else {
+        Write-Error "Could not parse GitHub owner/repo from remote: $remoteUrl"
+        exit 1
+    }
+
+    # Copy image into assets/linkedin/ in the repo
+    $assetsDir = Join-Path $repoRoot "assets\linkedin"
+    if (-not (Test-Path $assetsDir)) { New-Item -ItemType Directory -Path $assetsDir | Out-Null }
+
+    $filename  = Split-Path $ImagePath -Leaf
+    $destPath  = Join-Path $assetsDir $filename
+    Copy-Item $ImagePath $destPath -Force
+
+    # Commit and push (skip if nothing changed — image already there)
+    $relativePath = "assets/linkedin/$filename"
+    & git -C $repoRoot add $relativePath | Out-Null
+    $status = & git -C $repoRoot status --porcelain $relativePath
+    if ($status) {
+        & git -C $repoRoot commit -m "Add image for LinkedIn post: $filename" | Out-Null
+        & git -C $repoRoot push origin HEAD | Out-Null
+        Write-Host "  Pushed image to GitHub: $relativePath" -ForegroundColor DarkCyan
+    } else {
+        Write-Host "  Image already in GitHub: $relativePath" -ForegroundColor DarkCyan
+    }
+
+    $branch   = & git -C $repoRoot rev-parse --abbrev-ref HEAD
+    $ImageUrl = "https://raw.githubusercontent.com/$ownerRepo/$branch/$relativePath"
+}
+
 # --- Build request body ---
 $platform = @{
     platform  = "linkedin"
@@ -83,7 +131,7 @@ Write-Host ""
 Write-Host "Posting to LinkedIn via Zernio..." -ForegroundColor Cyan
 Write-Host "  Account  : $AccountId"
 Write-Host "  Mode     : $(if ($ScheduledFor) { "Scheduled for $ScheduledFor ($Timezone)" } else { "Publish now" })"
-Write-Host "  Image    : $(if ($ImageUrl) { $ImageUrl } else { "None" })"
+Write-Host "  Image    : $(if ($ImageUrl) { $ImageUrl } elseif ($ImagePath) { $ImagePath } else { "None" })"
 Write-Host "  Content  : $($Content.Substring(0, [Math]::Min(80, $Content.Length)))$(if ($Content.Length -gt 80) { '...' })"
 Write-Host ""
 

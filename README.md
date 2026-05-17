@@ -14,7 +14,7 @@ Standalone image generation skill. Accepts a topic slug and prompt, calls the Ge
 Researches any topic on the internet first, then writes a professional LinkedIn post with a strong hook, insightful body, hyphen bullets, proper spacing, and up to 3 hashtags. Never writes before researching.
 
 ### linkedin-post-creator
-Publishes and schedules LinkedIn posts via the Zernio API. Supports text-only posts, image posts, and scheduled publishing. Account ID and API keys are stored in the shared gitignored config — no manual parameters needed.
+Publishes and schedules LinkedIn posts via the Zernio API. Supports text-only posts, image posts, and scheduled publishing. Pass a **local image file path** and the script automatically commits it to `assets/linkedin/` in the GitHub repo and uses the raw URL — no manual hosting required. Account ID and API keys are stored in the shared gitignored config.
 
 ## Diagram Formats (sketch-explainer)
 
@@ -79,6 +79,8 @@ Copy the LinkedIn account ID into `config.env`.
 ## File Structure
 
 ```
+assets/
+  linkedin/                             ← generated images committed here for public GitHub URLs
 .claude/skills/
   config.env                            ← shared API keys (gitignored, never commit)
   sketch-explainer/
@@ -94,7 +96,7 @@ Copy the LinkedIn account ID into `config.env`.
     SKILL.md
     scripts/
       list_accounts.ps1                 ← find your LinkedIn account ID
-      post_linkedin.ps1                 ← publish or schedule via Zernio
+      post_linkedin.ps1                 ← publish or schedule via Zernio (-ImagePath auto-pushes to GitHub)
 ```
 
 ## Reference Image
