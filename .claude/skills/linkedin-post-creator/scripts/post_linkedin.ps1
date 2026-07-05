@@ -156,12 +156,14 @@ $headers = @{
 $response = Invoke-RestMethod -Uri "https://zernio.com/api/v1/posts" -Method POST -Headers $headers -Body $json
 
 # --- Report result ---
-$postId = $response.post._id
+$postId  = $response.post._id
+$postUrl = $response.post.platforms[0].platformPostUrl
 if ($ScheduledFor) {
     Write-Host "Scheduled!" -ForegroundColor Green
     Write-Host "  Post ID      : $postId"
     Write-Host "  Scheduled for: $ScheduledFor ($Timezone)"
 } else {
     Write-Host "Published!" -ForegroundColor Green
-    Write-Host "  Post ID: $postId"
+    Write-Host "  Post ID : $postId"
+    if ($postUrl) { Write-Host "  Post URL: $postUrl" -ForegroundColor Cyan }
 }
