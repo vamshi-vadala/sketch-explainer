@@ -3,7 +3,16 @@
 
 $ErrorActionPreference = "Stop"
 
-# --- Resolve API key from shared config ---
+# --- GCP Secret Manager fallback (used on VM; silently skipped if gcloud unavailable) ---
+function Get-GcpSecret([string]$Name) {
+    try {
+        $val = & gcloud secrets versions access latest --secret=$Name --project=personalassistant-501418 2>$null
+        if ($LASTEXITCODE -eq 0 -and $val) { return $val.Trim() }
+    } catch {}
+    return $null
+}
+
+# --- Resolve API key from shared config → env var → GCP Secret Manager ---
 $skillDir = Split-Path $PSScriptRoot -Parent
 $sharedDir = Split-Path $skillDir -Parent
 $configCandidates = @(
@@ -23,8 +32,9 @@ foreach ($configPath in $configCandidates) {
     if ($apiKey) { break }
 }
 if (-not $apiKey) { $apiKey = $env:ZERNIO_API_KEY }
+if (-not $apiKey) { $apiKey = Get-GcpSecret "zernio-api-key" }
 if (-not $apiKey) {
-    Write-Error "ZERNIO_API_KEY not found. Add it to .claude/skills/config.env"
+    Write-Error "ZERNIO_API_KEY not found. Add it to .claude/skills/config.env, as an env var, or in GCP Secret Manager as 'zernio-api-key'."
     exit 1
 }
 

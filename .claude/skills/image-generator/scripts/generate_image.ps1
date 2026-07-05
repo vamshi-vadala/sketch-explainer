@@ -13,7 +13,16 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# --- Resolve API key: skill-local config.env → shared skills config.env → env var ---
+# --- GCP Secret Manager fallback (used on VM; silently skipped if gcloud unavailable) ---
+function Get-GcpSecret([string]$Name) {
+    try {
+        $val = & gcloud secrets versions access latest --secret=$Name --project=personalassistant-501418 2>$null
+        if ($LASTEXITCODE -eq 0 -and $val) { return $val.Trim() }
+    } catch {}
+    return $null
+}
+
+# --- Resolve API key: skill-local config.env → shared skills config.env → env var → GCP Secret Manager ---
 $skillDir = Split-Path $PSScriptRoot -Parent
 $sharedDir = Split-Path $skillDir -Parent
 $configCandidates = @(
@@ -33,8 +42,9 @@ foreach ($configPath in $configCandidates) {
     if ($apiKey) { break }
 }
 if (-not $apiKey) { $apiKey = $env:GEMINI_API_KEY }
+if (-not $apiKey) { $apiKey = Get-GcpSecret "gemini-api-key" }
 if (-not $apiKey) {
-    Write-Error "GEMINI_API_KEY not found. Set it in .claude/skills/config.env or as an env var."
+    Write-Error "GEMINI_API_KEY not found. Set it in .claude/skills/config.env, as an env var, or in GCP Secret Manager as 'gemini-api-key'."
     exit 1
 }
 
