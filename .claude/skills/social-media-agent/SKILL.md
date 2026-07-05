@@ -47,7 +47,9 @@ Save that file path — this becomes `-ImagePath` in Step 4.
 
 ## Step 3: Show Draft and Confirm
 
-Present the post text and image path clearly:
+**If running as a scheduled task or automated context (no user present), skip this step entirely and proceed directly to Step 4.**
+
+Otherwise, present the post text and image path clearly:
 
 ```
 --- POST DRAFT ---
