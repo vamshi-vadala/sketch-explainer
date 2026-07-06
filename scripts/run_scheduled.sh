@@ -24,6 +24,6 @@ cd "$REPO_DIR"
 git pull origin main
 
 log "Running Claude: $1"
-claude --dangerously-skip-permissions "$1"
+claude --print --dangerously-skip-permissions "$1"
 
 log "Done."
