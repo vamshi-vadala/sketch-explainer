@@ -1,7 +1,7 @@
 #!/bin/bash
 # run_scheduled.sh — fetch secrets from GCP Secret Manager and run a Claude scheduled task
 # Usage: ./scripts/run_scheduled.sh "your prompt here"
-# Cron:  0 17 * * 0 /home/vadala_vamshi/sketch-explainer/scripts/run_scheduled.sh "generate a post on latest AI buzz that is most viewed in last 3 days" >> /home/vadala_vamshi/linkedin-post.log 2>&1
+# Cron:  0 17 * * 0 /home/vadala_vamshi/sketch-explainer/scripts/run_scheduled.sh "generate and publish a post on latest AI buzz that is most viewed in last 3 days" >> /home/vadala_vamshi/linkedin-post.log 2>&1
 
 set -e
 
