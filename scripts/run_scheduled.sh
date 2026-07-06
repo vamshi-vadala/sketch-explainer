@@ -14,9 +14,10 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 log "Fetching secrets from GCP Secret Manager..."
 export ANTHROPIC_API_KEY=$(gcloud secrets versions access latest --secret=anthropic-api-key --project=$PROJECT)
 export GITHUB_TOKEN=$(gcloud secrets versions access latest --secret=github-token --project=$PROJECT)
+GITHUB_USERNAME=$(gcloud secrets versions access latest --secret=github-username --project=$PROJECT)
 
 # Configure git to use the token for GitHub pushes (needed for image uploads)
-git config --global url."https://VamshiVK:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 log "Pulling latest skills from GitHub..."
 cd "$REPO_DIR"
