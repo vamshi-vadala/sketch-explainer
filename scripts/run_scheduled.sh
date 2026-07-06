@@ -30,8 +30,14 @@ export ANTHROPIC_API_KEY=$(fetch_secret anthropic-api-key)
 export GITHUB_TOKEN=$(fetch_secret AILinkedInPost-Github-token)
 GITHUB_USERNAME=$(fetch_secret github-username)
 
-# Configure git to use the token for GitHub pushes (needed for image uploads)
-git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+# Configure git auth for GitHub pushes (needed for image uploads).
+# Use a fixed-key credential helper so re-runs overwrite cleanly — embedding the
+# token in an insteadOf URL creates a new config key per token and leaves stale
+# (empty-token) rules behind, which silently breaks auth on later runs.
+git config --global "credential.https://github.com.helper" \
+    "!f() { echo username=${GITHUB_USERNAME}; echo password=${GITHUB_TOKEN}; }; f"
+# Remove any legacy insteadOf rules left by earlier versions of this script
+git config --global --remove-section 'url.https://'"${GITHUB_USERNAME}"':'"${GITHUB_TOKEN}"'@github.com/' 2>/dev/null || true
 
 log "Pulling latest skills from GitHub..."
 cd "$REPO_DIR"
