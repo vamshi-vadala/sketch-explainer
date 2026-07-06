@@ -102,7 +102,11 @@ if ($ImagePath) {
     $status = & git -C $repoRoot status --porcelain $relativePath
     if ($status) {
         & git -C $repoRoot commit -m "Add image for LinkedIn post: $filename" | Out-Null
-        & git -C $repoRoot push origin HEAD | Out-Null
+        $pushOutput = & git -C $repoRoot push origin HEAD 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "git push failed — image not on GitHub, aborting before LinkedIn post:`n$pushOutput"
+            exit 1
+        }
         Write-Host "  Pushed image to GitHub: $relativePath" -ForegroundColor DarkCyan
     } else {
         Write-Host "  Image already in GitHub: $relativePath" -ForegroundColor DarkCyan
@@ -110,6 +114,21 @@ if ($ImagePath) {
 
     $branch   = & git -C $repoRoot rev-parse --abbrev-ref HEAD
     $ImageUrl = "https://raw.githubusercontent.com/$ownerRepo/$branch/$relativePath"
+
+    # Verify the raw URL actually resolves before posting — GitHub raw can lag a few seconds
+    $resolved = $false
+    for ($i = 1; $i -le 5; $i++) {
+        try {
+            $head = Invoke-WebRequest -Uri $ImageUrl -Method Head -TimeoutSec 15 -ErrorAction Stop
+            if ($head.StatusCode -eq 200) { $resolved = $true; break }
+        } catch {}
+        Start-Sleep -Seconds 3
+    }
+    if (-not $resolved) {
+        Write-Error "Image URL did not return HTTP 200 after retries — aborting to avoid a broken-image post:`n$ImageUrl"
+        exit 1
+    }
+    Write-Host "  Image URL verified (HTTP 200): $ImageUrl" -ForegroundColor DarkCyan
 }
 
 # --- Build request body ---
