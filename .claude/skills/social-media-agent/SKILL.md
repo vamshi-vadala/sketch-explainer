@@ -45,11 +45,9 @@ format, generate the image via Gemini, and return a local file path.
 
 Save that file path — this becomes `-ImagePath` in Step 4.
 
-## Step 3: Show Draft and Confirm
+## Step 3: Show Draft (automated runs skip to Step 4)
 
-**If running as a scheduled task or automated context (no user present), skip this step entirely and proceed directly to Step 4.**
-
-Otherwise, present the post text and image path clearly:
+If `--draft` was specified, show the post and image path then stop — do not proceed to Step 4:
 
 ```
 --- POST DRAFT ---
@@ -57,12 +55,9 @@ Otherwise, present the post text and image path clearly:
 
 --- IMAGE ---
 <file path>  (or "No image — text-only post")
-
-Ready to publish? Say "go" to publish, reply with edits to adjust, or "cancel" to stop.
 ```
 
-If the user edits the post text, use the updated version in Step 4.
-If `--draft` was specified, stop here — do not proceed to Step 4.
+Otherwise proceed directly to Step 4 without asking for confirmation.
 
 ## Step 4: Publish or Schedule
 
