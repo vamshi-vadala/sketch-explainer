@@ -11,10 +11,24 @@ PROJECT="personalassistant-501418"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
+fetch_secret() {
+    local name="$1"
+    local value
+    value=$(gcloud secrets versions access latest --secret="$name" --project="$PROJECT") || {
+        echo "FATAL: failed to fetch secret '$name' from Secret Manager" >&2
+        exit 1
+    }
+    if [ -z "$value" ]; then
+        echo "FATAL: secret '$name' returned empty value" >&2
+        exit 1
+    fi
+    echo "$value"
+}
+
 log "Fetching secrets from GCP Secret Manager..."
-export ANTHROPIC_API_KEY=$(gcloud secrets versions access latest --secret=anthropic-api-key --project=$PROJECT)
-export GITHUB_TOKEN=$(gcloud secrets versions access latest --secret=AILinkedInPost-Github-token --project=$PROJECT)
-GITHUB_USERNAME=$(gcloud secrets versions access latest --secret=github-username --project=$PROJECT)
+export ANTHROPIC_API_KEY=$(fetch_secret anthropic-api-key)
+export GITHUB_TOKEN=$(fetch_secret AILinkedInPost-Github-token)
+GITHUB_USERNAME=$(fetch_secret github-username)
 
 # Configure git to use the token for GitHub pushes (needed for image uploads)
 git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
