@@ -14,13 +14,21 @@
 # validates it, and posts it with zero LLM cost. Every publish path runs validate_draft,
 # so a short / refusal / hashtag-less / broken-image post can never reach LinkedIn.
 #
+# HITL Model B (publish-unless-vetoed): the default generate run SCHEDULES the post
+# SCHEDULE_HOURS out via Zernio and sends a Telegram notification, giving a review/veto
+# window. It auto-publishes at that time unless you cancel/edit it in Zernio.
+#
 # Usage:
-#   ./scripts/run_scheduled.sh "topic"              # generate + validate + publish (cron one-shot)
+#   ./scripts/run_scheduled.sh "topic"              # generate + validate + SCHEDULE + notify (cron)
+#   PUBLISH_NOW=1 ./scripts/run_scheduled.sh "topic"      # generate + publish immediately (no wait)
 #   DRY_RUN=1 ./scripts/run_scheduled.sh "topic"    # generate + save draft, do NOT publish (preview)
-#   PUBLISH_DRAFT=drafts/xyz ./scripts/run_scheduled.sh   # publish that exact draft, no LLM cost
+#   PUBLISH_DRAFT=drafts/xyz ./scripts/run_scheduled.sh   # publish that exact draft now, no LLM cost
 # Env:
-#   NO_IMAGE=1      text-only post (skip image stages)
-#   COST_CEILING=N  abort before next stage/publish if cumulative spend exceeds $N (default 0.30)
+#   SCHEDULE_HOURS=N  how far out to schedule (default 36; 0 = publish now)
+#   TIMEZONE=Area/City  timezone for the scheduled time (default UTC)
+#   NO_IMAGE=1        text-only post (skip image stages)
+#   COST_CEILING=N    abort before next stage/publish if cumulative spend exceeds $N (default 0.30)
+# Notify secrets (best-effort, never abort): linkedin-bot-token, telegram-chat-id.
 # Pause switch: create scripts/.pipeline-disabled to halt without editing crontab.
 #
 # Review-then-publish (no waste, ships what you saw):
@@ -104,15 +112,46 @@ setup_git_auth() {
     git config --global --unset-all 'credential.https://github.com.username' 2>/dev/null || true
 }
 
+POST_SCRIPT="$REPO_DIR/.claude/skills/linkedin-post-creator/scripts/post_linkedin.ps1"
+
 publish() {
     local post="$1" img="$2"
-    local post_script="$REPO_DIR/.claude/skills/linkedin-post-creator/scripts/post_linkedin.ps1"
-    log "Publishing to LinkedIn"
+    log "Publishing to LinkedIn (now)"
     if [ -n "$img" ]; then
-        pwsh -File "$post_script" -Content "$post" -ImagePath "$img"
+        pwsh -File "$POST_SCRIPT" -Content "$post" -ImagePath "$img"
     else
-        pwsh -File "$post_script" -Content "$post"
+        pwsh -File "$POST_SCRIPT" -Content "$post"
     fi
+}
+
+# Model B: schedule the post out into the future via Zernio, giving a review/veto window.
+schedule_post() {
+    local post="$1" img="$2" when="$3" tz="$4"
+    log "Scheduling LinkedIn post for $when $tz"
+    if [ -n "$img" ]; then
+        pwsh -File "$POST_SCRIPT" -Content "$post" -ImagePath "$img" -ScheduledFor "$when" -Timezone "$tz"
+    else
+        pwsh -File "$POST_SCRIPT" -Content "$post" -ScheduledFor "$when" -Timezone "$tz"
+    fi
+}
+
+# Best-effort phone notification. NEVER aborts the run — the post is already scheduled by the
+# time we notify, so a failed/absent Telegram secret must not turn a good schedule into an error.
+notify_telegram() {
+    local text="$1" bot chat
+    bot=$(gcloud secrets versions access latest --secret=linkedin-bot-token --project="$PROJECT" 2>/dev/null) \
+        || { log "WARNING: linkedin-bot-token unavailable — skipping Telegram notify"; return 0; }
+    chat=$(gcloud secrets versions access latest --secret=telegram-chat-id --project="$PROJECT" 2>/dev/null) \
+        || { log "WARNING: telegram-chat-id unavailable — skipping Telegram notify"; return 0; }
+    if curl -s -o /dev/null "https://api.telegram.org/bot${bot}/sendMessage" \
+        --data-urlencode "chat_id=${chat}" \
+        --data-urlencode "text=${text}" \
+        -d disable_web_page_preview=true; then
+        log "Telegram notification sent"
+    else
+        log "WARNING: Telegram send failed (post is still scheduled)"
+    fi
+    return 0
 }
 
 # =========================================================================
@@ -219,8 +258,23 @@ if [ -n "$DRY_RUN" ]; then
     exit 0
 fi
 
-# --- Publish the draft we just generated (one generation, no waste) ---
-publish "$POST" "$IMG_PATH"
-printf '[%s] PUBLISHED draft=%s total=$%s published=yes topic="%s"\n' \
-    "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$TOTAL_COST" "$TOPIC" >> "$COST_LOG"
-log "Done. Total LLM cost: \$$TOTAL_COST"
+# --- Model B (default): schedule the draft out into the future + notify, so there is a
+#     review/veto window in Zernio. PUBLISH_NOW=1 (or SCHEDULE_HOURS=0) posts immediately. ---
+SCHEDULE_HOURS="${SCHEDULE_HOURS:-36}"
+TIMEZONE="${TIMEZONE:-UTC}"
+
+if [ -n "$PUBLISH_NOW" ] || [ "$SCHEDULE_HOURS" = "0" ]; then
+    publish "$POST" "$IMG_PATH"
+    printf '[%s] PUBLISHED draft=%s total=$%s published=now topic="%s"\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$TOTAL_COST" "$TOPIC" >> "$COST_LOG"
+    log "Done (published now). Total LLM cost: \$$TOTAL_COST"
+else
+    # Wall-clock in TIMEZONE so it matches the -Timezone we pass to Zernio.
+    WHEN=$(TZ="$TIMEZONE" date -d "+${SCHEDULE_HOURS} hours" '+%Y-%m-%dT%H:%M:%S')
+    schedule_post "$POST" "$IMG_PATH" "$WHEN" "$TIMEZONE"
+    notify_telegram "$(printf '📝 LinkedIn post scheduled for %s %s (in %sh).\nAuto-publishes unless you cancel or edit it in Zernio.\n\n%s\n\n(image: %s)' \
+        "$WHEN" "$TIMEZONE" "$SCHEDULE_HOURS" "$POST" "${IMG_PATH:-none}")"
+    printf '[%s] SCHEDULED draft=%s for=%s %s total=$%s published=scheduled topic="%s"\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$WHEN" "$TIMEZONE" "$TOTAL_COST" "$TOPIC" >> "$COST_LOG"
+    log "Done (scheduled for $WHEN $TIMEZONE, notified). Total LLM cost: \$$TOTAL_COST"
+fi

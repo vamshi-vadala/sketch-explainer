@@ -88,17 +88,23 @@ Unattended weekly pipeline. A **shell script orchestrates**; the LLM is called o
 
 **Generate and publish are separate.** Generation always saves the post + image to `drafts/<slug-timestamp>/`; publishing loads that draft, validates it, and posts it. So you can preview and publish the *same* artifact once — no regenerating a different post for $0.14 you already spent.
 
+**HITL — publish-unless-vetoed (Model B).** The default run doesn't post immediately: it **schedules** the post `SCHEDULE_HOURS` out via Zernio and sends a **Telegram** notification, giving you a review window. Do nothing and it auto-publishes; open Zernio to cancel or edit if it's off. Notification is best-effort (a missing/failed Telegram secret never blocks the schedule).
+
 ```bash
-./scripts/run_scheduled.sh "generate a post on latest AI buzz"   # generate + validate + publish (cron)
+./scripts/run_scheduled.sh "generate a post on latest AI buzz"   # generate + validate + SCHEDULE + notify (cron)
+PUBLISH_NOW=1 ./scripts/run_scheduled.sh "AI agents"  # generate + publish immediately (skip the wait)
 
 # Review-then-publish — no waste, ships exactly what you saw:
 DRY_RUN=1 ./scripts/run_scheduled.sh "AI agents"      # generate + save draft, do NOT publish
 #   ...eyeball drafts/<dir>/post.txt...
-PUBLISH_DRAFT=drafts/<dir> ./scripts/run_scheduled.sh # post that exact draft — $0, no regeneration
+PUBLISH_DRAFT=drafts/<dir> ./scripts/run_scheduled.sh # post that exact draft now — $0, no regeneration
 
+SCHEDULE_HOURS=24 TIMEZONE=Asia/Kolkata ./scripts/run_scheduled.sh "..."  # tune when it auto-publishes
 NO_IMAGE=1 ./scripts/run_scheduled.sh "remote work"   # text-only post
 COST_CEILING=0.20 ./scripts/run_scheduled.sh "..."    # circuit-breaker ceiling in $ (default 0.30)
 ```
+
+Telegram notifications read two secrets: `linkedin-bot-token` (bot token from @BotFather) and `telegram-chat-id`.
 
 - **Never ships half-baked:** every publish path runs a content gate first — post length 150–3000 chars, at least one hashtag, not a model refusal, and (if expected) a real, non-tiny image. Any failure aborts before LinkedIn. A stage that runs out of turns (`error_max_turns`) or trips `COST_CEILING` also aborts before publish.
 - **Pause without editing crontab:** `touch scripts/.pipeline-disabled` (delete to resume).
