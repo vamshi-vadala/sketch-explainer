@@ -94,13 +94,12 @@ fetch_secret() {
 
 setup_git_auth() {
     export GITHUB_TOKEN=$(fetch_secret AILinkedInPost-Github-token)
-    local github_username; github_username=$(fetch_secret github-username)
-    # Fixed-key credential helper so re-runs overwrite cleanly — embedding the token in
-    # an insteadOf URL creates a new config key per token and leaves stale (empty-token)
-    # rules behind, which silently breaks auth on later runs.
+    # Use x-access-token as the HTTPS username — the universal GitHub token login that works
+    # for any fine-grained PAT (verified: x-access-token:$TOKEN pushes cleanly). The earlier
+    # "Invalid username or token" failure came from feeding the github-username secret, whose
+    # value didn't match; x-access-token removes that dependency entirely.
     git config --global "credential.https://github.com.helper" \
-        "!f() { echo username=${github_username}; echo password=${GITHUB_TOKEN}; }; f"
-    git config --global --remove-section 'url.https://'"${github_username}"':'"${GITHUB_TOKEN}"'@github.com/' 2>/dev/null || true
+        "!f() { echo username=x-access-token; echo password=${GITHUB_TOKEN}; }; f"
 }
 
 publish() {
