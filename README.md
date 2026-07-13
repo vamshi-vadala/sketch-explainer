@@ -47,6 +47,12 @@ LINKEDIN_ACCOUNT_ID=your-linkedin-account-id-here
 - **Zernio key**: [zernio.com](https://zernio.com) → Settings → API Keys
 - **LinkedIn account ID**: run `list_accounts.ps1` after connecting LinkedIn in Zernio
 
+For the **unattended scheduled runner** (`scripts/run_scheduled.sh`), secrets are pulled from GCP Secret Manager instead of `config.env`, including one not needed for interactive use:
+
+- `anthropic-api-key` — drives the Claude CLI in headless mode (interactive use relies on your logged-in session, so this secret only matters for cron)
+- `AILinkedInPost-Github-token` — pushes generated images to GitHub. Use a **fine-grained PAT scoped to `contents:read/write` on this repo only**, not a broad classic token
+- `github-username`, `zernio-api-key`, `gemini-api-key`, `linkedin-account-id`
+
 ### 2. Connect LinkedIn to Zernio
 
 Go to [zernio.com](https://zernio.com) → Settings → Connected Accounts → Add LinkedIn. Then run:
@@ -76,6 +82,22 @@ Copy the LinkedIn account ID into `config.env`.
 /linkedin-post-creator    ← publishes to LinkedIn via Zernio
 ```
 
+## Scheduled Runner (`scripts/run_scheduled.sh`)
+
+Unattended weekly pipeline. A **shell script orchestrates**; the LLM is called only for the two reasoning steps (write copy, design image prompt) — each on **Haiku**, turn-capped, and restricted to read/research tools. Image rendering and publishing are direct `pwsh` calls with fixed arguments, so the LLM never has authority to `git push` or publish. This keeps cost bounded up front (a runaway Opus loop is structurally impossible) and shrinks blast radius.
+
+```bash
+./scripts/run_scheduled.sh "generate a post on latest AI buzz"
+
+DRY_RUN=1 ./scripts/run_scheduled.sh "AI agents"      # run everything except publish; print the draft
+NO_IMAGE=1 ./scripts/run_scheduled.sh "remote work"   # text-only post
+COST_CEILING=0.50 ./scripts/run_scheduled.sh "..."    # circuit-breaker ceiling in $ (default 1.00)
+```
+
+- **Pause without editing crontab:** `touch scripts/.pipeline-disabled` (delete to resume).
+- **Cost/observability:** every stage appends `turns` + `$cost` to `linkedin-cost.log` (repo root). Use it to tighten `--max-turns` and set a steady-state `COST_CEILING`.
+- **Requires** PowerShell 7 (`pwsh`) and `python3` on the runner (the Linux VM).
+
 ## Example Topics
 
 | Topic | Skill | Format |
@@ -89,6 +111,10 @@ Copy the LinkedIn account ID into `config.env`.
 ## File Structure
 
 ```
+scripts/
+  run_scheduled.sh                      ← unattended orchestrator (secrets → write → image → publish)
+  lib_claude_stage.sh                   ← scoped/bounded Claude stage runner + cost logging
+linkedin-cost.log                       ← per-run turns + $ cost (gitignored)
 assets/
   linkedin/                             ← generated images committed here for public GitHub URLs
 .claude/
