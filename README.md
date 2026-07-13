@@ -91,7 +91,7 @@ Unattended weekly pipeline. A **shell script orchestrates**; the LLM is called o
 
 DRY_RUN=1 ./scripts/run_scheduled.sh "AI agents"      # run everything except publish; print the draft
 NO_IMAGE=1 ./scripts/run_scheduled.sh "remote work"   # text-only post
-COST_CEILING=0.50 ./scripts/run_scheduled.sh "..."    # circuit-breaker ceiling in $ (default 1.00)
+COST_CEILING=0.20 ./scripts/run_scheduled.sh "..."    # circuit-breaker ceiling in $ (default 0.30)
 ```
 
 - **Pause without editing crontab:** `touch scripts/.pipeline-disabled` (delete to resume).

@@ -25,7 +25,7 @@ PROJECT="personalassistant-501418"
 
 TOPIC="${1:?Usage: run_scheduled.sh \"topic\"}"
 COST_LOG="${COST_LOG:-$REPO_DIR/linkedin-cost.log}"
-COST_CEILING="${COST_CEILING:-1.00}"
+COST_CEILING="${COST_CEILING:-0.30}"
 HAIKU="claude-haiku-4-5-20251001"
 TOTAL_COST=0
 
@@ -74,7 +74,7 @@ git pull origin main
 
 # --- Stage 1: research + write copy (LLM, scoped, bounded) ---
 log "Stage 1: writing post for topic: $TOPIC"
-run_claude_stage "write" "$HAIKU" 8 "WebSearch,WebFetch,Read,Skill" \
+run_claude_stage "write" "$HAIKU" 10 "WebSearch,WebFetch,Read,Skill" \
 "Use the linkedin-post skill to research and write a LinkedIn post about: ${TOPIC}. Output ONLY the final post text, wrapped between <<<POST>>> and <<<ENDPOST>>> markers. No preamble, no explanation, no research-source note."
 
 POST=$(printf '%s' "$STAGE_RESULT" | python3 -c '
@@ -93,7 +93,7 @@ check_ceiling
 IMG_PATH=""
 if [ -z "$NO_IMAGE" ]; then
     log "Stage 2: designing image prompt"
-    run_claude_stage "image" "$HAIKU" 4 "Read,Skill" \
+    run_claude_stage "image" "$HAIKU" 6 "Read,Skill" \
 "Use the sketch-explainer skill to design a whiteboard diagram that matches the LinkedIn post below. Do NOT generate the image — stop after producing the prompt. Output ONLY strict JSON of the form {\"slug\":\"<short-kebab-topic>\",\"prompt\":\"<full 150-250 word image prompt>\"}. Topic: ${TOPIC}. Post: ${POST}"
 
     parsed=$(printf '%s' "$STAGE_RESULT" | python3 -c '
