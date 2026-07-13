@@ -49,7 +49,7 @@ LINKEDIN_ACCOUNT_ID=your-linkedin-account-id-here
 
 For the **unattended scheduled runner** (`scripts/run_scheduled.sh`), secrets are pulled from GCP Secret Manager instead of `config.env`, including one not needed for interactive use:
 
-- `anthropic-api-key` — drives the Claude CLI in headless mode (interactive use relies on your logged-in session, so this secret only matters for cron)
+- `Linkedin-post-generator` — the Anthropic API key that drives the Claude CLI in headless mode (interactive use relies on your logged-in session, so this secret only matters for cron)
 - `AILinkedInPost-Github-token` — pushes generated images to GitHub. Use a **fine-grained PAT scoped to `contents:read/write` on this repo only**, not a broad classic token
 - `github-username`, `zernio-api-key`, `gemini-api-key`, `linkedin-account-id`
 

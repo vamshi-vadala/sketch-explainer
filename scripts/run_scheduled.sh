@@ -55,7 +55,7 @@ fetch_secret() {
 
 # --- Stage 0: secrets + git auth + pull ---
 log "Fetching secrets from GCP Secret Manager..."
-export ANTHROPIC_API_KEY=$(fetch_secret anthropic-api-key)
+export ANTHROPIC_API_KEY=$(fetch_secret Linkedin-post-generator)
 export GITHUB_TOKEN=$(fetch_secret AILinkedInPost-Github-token)
 GITHUB_USERNAME=$(fetch_secret github-username)
 
