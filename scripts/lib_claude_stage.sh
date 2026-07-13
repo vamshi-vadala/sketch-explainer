@@ -36,8 +36,11 @@ try:
     d = json.load(sys.stdin)
 except Exception as e:
     sys.stderr.write("json parse error: %s\n" % e); sys.exit(1)
-if d.get("is_error"):
-    sys.stderr.write("claude returned is_error=true\n"); sys.exit(1)
+sub = d.get("subtype", "") or ""
+# Abort on any error result — crucially error_max_turns, which means the stage was
+# cut off mid-work. A truncated post must never reach publish.
+if d.get("is_error") or sub.startswith("error"):
+    sys.stderr.write("claude result error (subtype=%s)\n" % sub); sys.exit(1)
 res = d.get("result", "") or ""
 print("STAGE_RESULT_B64=" + base64.b64encode(res.encode()).decode())
 print("STAGE_COST=" + repr(float(d.get("total_cost_usd", 0) or 0)))
