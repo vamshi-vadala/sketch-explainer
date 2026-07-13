@@ -93,13 +93,15 @@ fetch_secret() {
 }
 
 setup_git_auth() {
-    export GITHUB_TOKEN=$(fetch_secret AILinkedInPost-Github-token)
-    # Use x-access-token as the HTTPS username — the universal GitHub token login that works
-    # for any fine-grained PAT (verified: x-access-token:$TOKEN pushes cleanly). The earlier
-    # "Invalid username or token" failure came from feeding the github-username secret, whose
-    # value didn't match; x-access-token removes that dependency entirely.
-    git config --global "credential.https://github.com.helper" \
-        "!f() { echo username=x-access-token; echo password=${GITHUB_TOKEN}; }; f"
+    # The helper fetches the token from Secret Manager at call time — the token is NEVER
+    # written into ~/.gitconfig (no plaintext secret at rest) and rotation is picked up for
+    # free. x-access-token is GitHub's universal token username (verified: it pushes cleanly);
+    # the earlier "Invalid username or token" came from a stale helper feeding a real login.
+    # --replace-all collapses any pre-existing/duplicate helpers to this single value.
+    git config --global --replace-all "credential.https://github.com.helper" \
+        '!f() { echo username=x-access-token; echo password=$(gcloud secrets versions access latest --secret=AILinkedInPost-Github-token --project='"$PROJECT"'); }; f'
+    # Drop any hard-set username left by older versions (it overrides the helper's username).
+    git config --global --unset-all 'credential.https://github.com.username' 2>/dev/null || true
 }
 
 publish() {
