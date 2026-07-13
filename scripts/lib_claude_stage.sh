@@ -18,11 +18,12 @@ run_claude_stage() {
 
     # No --dangerously-skip-permissions: in headless --print mode any tool outside
     # the allowlist is denied, so a reasoning stage physically cannot git-push or publish.
-    raw=$(claude --print --output-format json \
+    # Prompt goes via stdin, not a positional arg: --allowedTools is variadic and would
+    # otherwise swallow the prompt as a tool name ("Input must be provided ..." error).
+    raw=$(printf '%s' "$prompt" | claude --print --output-format json \
         --model "$model" \
         --max-turns "$max_turns" \
-        --allowedTools "$allowed_tools" \
-        "$prompt") || {
+        --allowedTools "$allowed_tools") || {
         echo "FATAL: claude stage '$stage' failed to run" >&2
         exit 1
     }
