@@ -23,6 +23,7 @@
 #   PUBLISH_NOW=1 ./scripts/run_scheduled.sh "topic"      # generate + publish immediately (no wait)
 #   DRY_RUN=1 ./scripts/run_scheduled.sh "topic"    # generate + save draft, do NOT publish (preview)
 #   PUBLISH_DRAFT=drafts/xyz ./scripts/run_scheduled.sh   # publish that exact draft now, no LLM cost
+#   PUBLISH_DRAFT=drafts/xyz SCHEDULE_HOURS=2 ./scripts/run_scheduled.sh  # SCHEDULE that draft (Model B), $0
 # Env:
 #   SCHEDULE_HOURS=N  how far out to schedule (default 36; 0 = publish now)
 #   TIMEZONE=Area/City  timezone for the scheduled time (default UTC)
@@ -110,6 +111,24 @@ setup_git_auth() {
         '!f() { echo username=x-access-token; echo password=$(gcloud secrets versions access latest --secret=AILinkedInPost-Github-token --project='"$PROJECT"'); }; f'
     # Drop any hard-set username left by older versions (it overrides the helper's username).
     git config --global --unset-all 'credential.https://github.com.username' 2>/dev/null || true
+
+    # Self-heal stray URL rewrites: an old `url."https://user:@github.com/".insteadOf`
+    # silently rewrites every github.com URL to embed a username + empty password, which
+    # makes git bypass the helper and fail with "Invalid username or token". Strip any such
+    # github.com insteadOf rule so the clean URL always flows through the helper above.
+    git config --global --get-regexp 'url\..*github\.com.*\.insteadof' 2>/dev/null \
+        | awk '{print $1}' | sort -u | while read -r key; do
+            git config --global --unset-all "$key" 2>/dev/null || true
+        done
+    # Self-heal embedded credentials baked into the origin remote URL (same failure mode:
+    # a revoked token frozen in the URL wins over the helper). Reset to the canonical HTTPS URL.
+    origin_url=$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || true)
+    case "$origin_url" in
+        *@github.com/*)
+            git -C "$REPO_DIR" remote set-url origin \
+                "https://github.com/${origin_url#*@github.com/}" 2>/dev/null || true
+            ;;
+    esac
 }
 
 POST_SCRIPT="$REPO_DIR/.claude/skills/linkedin-post-creator/scripts/post_linkedin.ps1"
@@ -165,14 +184,31 @@ if [ -n "$PUBLISH_DRAFT" ]; then
     IMG_PATH=""; WANT_IMG=0
     if [ -s "$DRAFT/image_path" ]; then IMG_PATH=$(cat "$DRAFT/image_path"); WANT_IMG=1; fi
 
-    log "Publishing saved draft: $DRAFT"
+    log "Resuming saved draft (no LLM cost): $DRAFT"
     validate_draft "$POST" "$IMG_PATH" "$WANT_IMG"
     setup_git_auth
     cd "$REPO_DIR"
-    publish "$POST" "$IMG_PATH"
-    printf '[%s] PUBLISHED draft=%s cost=$0 published=yes\n' \
-        "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" >> "$COST_LOG"
-    log "Done. Published saved draft with no LLM cost."
+
+    # Default is publish-now (the documented PUBLISH_DRAFT contract). Opt into Model B by
+    # setting SCHEDULE_HOURS>0: the SAME saved artifact flows through schedule_post + notify,
+    # i.e. the full Mode B schedule/veto path at $0 — used to resume a schedule after a
+    # mid-run failure without regenerating. PUBLISH_NOW=1 forces immediate publish.
+    A_SCHEDULE_HOURS="${SCHEDULE_HOURS:-0}"
+    TIMEZONE="${TIMEZONE:-UTC}"
+    if [ -z "$PUBLISH_NOW" ] && [ "$A_SCHEDULE_HOURS" != "0" ]; then
+        WHEN=$(TZ="$TIMEZONE" date -d "+${A_SCHEDULE_HOURS} hours" '+%Y-%m-%dT%H:%M:%S')
+        schedule_post "$POST" "$IMG_PATH" "$WHEN" "$TIMEZONE"
+        notify_telegram "$(printf '📝 LinkedIn post scheduled for %s %s (in %sh).\nAuto-publishes unless you cancel or edit it in Zernio.\n\n%s\n\n(image: %s)' \
+            "$WHEN" "$TIMEZONE" "$A_SCHEDULE_HOURS" "$POST" "${IMG_PATH:-none}")"
+        printf '[%s] SCHEDULED draft=%s for=%s %s cost=$0 published=scheduled\n' \
+            "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$WHEN" "$TIMEZONE" >> "$COST_LOG"
+        log "Done (scheduled saved draft for $WHEN $TIMEZONE, notified). No LLM cost."
+    else
+        publish "$POST" "$IMG_PATH"
+        printf '[%s] PUBLISHED draft=%s cost=$0 published=yes\n' \
+            "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" >> "$COST_LOG"
+        log "Done. Published saved draft with no LLM cost."
+    fi
     exit 0
 fi
 
