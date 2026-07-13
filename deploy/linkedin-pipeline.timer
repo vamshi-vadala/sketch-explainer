@@ -1,11 +1,12 @@
 [Unit]
-Description=Weekly trigger for the LinkedIn post pipeline (Sun 20:30 UTC)
+Description=Weekly trigger for the LinkedIn post pipeline (Sun 20:30 IST / 15:00 UTC)
 
 [Timer]
-# Same slot as the old local routine (Sun 20:30 UTC). The UTC suffix needs systemd v240+;
-# if `systemctl status` shows a parse error, drop " UTC" and make sure the VM's timezone is
-# UTC (timedatectl set-timezone UTC), or adjust the time to your VM's local zone.
-OnCalendar=Sun *-*-* 20:30:00 UTC
+# Same slot as the old local routine: Sunday 20:30 IST == 15:00 UTC (the routine's nextRunAt
+# was 15:00Z). Pinned in UTC so it's correct regardless of the VM's timezone. The UTC suffix
+# needs systemd v240+; if `systemctl status` shows a parse error, drop " UTC" and set the VM
+# to UTC (timedatectl set-timezone UTC), which keeps this at 20:30 IST.
+OnCalendar=Sun *-*-* 15:00:00 UTC
 # If the VM is ever down at the trigger, run as soon as it's back instead of skipping the week.
 Persistent=true
 
