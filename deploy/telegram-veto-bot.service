@@ -1,0 +1,25 @@
+[Unit]
+Description=Telegram veto bot — Cancel button for scheduled LinkedIn posts (HITL Model B)
+Documentation=https://github.com/vamshi-vadala/sketch-explainer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vadala_vamshi
+WorkingDirectory=/home/vadala_vamshi/sketch-explainer
+# gcloud must be on PATH so the bot can read secrets from Secret Manager. Adjust the last
+# entry if `which gcloud` on the VM reports a different location.
+Environment=PROJECT=personalassistant-501418
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/vadala_vamshi/google-cloud-sdk/bin
+ExecStart=/usr/bin/python3 /home/vadala_vamshi/sketch-explainer/scripts/telegram_veto_bot.py
+Restart=always
+RestartSec=5
+# Light hardening only. Do NOT add ProtectHome/ProtectSystem=strict: gcloud writes its
+# config/credential cache and logs under ~/.config/gcloud, and locking the home read-only
+# makes Secret Manager fetches fail silently at startup.
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

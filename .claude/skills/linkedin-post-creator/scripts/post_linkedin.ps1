@@ -181,6 +181,9 @@ if ($ScheduledFor) {
     Write-Host "Scheduled!" -ForegroundColor Green
     Write-Host "  Post ID      : $postId"
     Write-Host "  Scheduled for: $ScheduledFor ($Timezone)"
+    # Machine-readable markers consumed by run_scheduled.sh -> notify_telegram (veto button).
+    Write-Output "ZERNIO_POST_ID=$postId"
+    if ($ImageUrl) { Write-Output "ZERNIO_IMAGE_URL=$ImageUrl" }
 } else {
     Write-Host "Published!" -ForegroundColor Green
     Write-Host "  Post ID : $postId"

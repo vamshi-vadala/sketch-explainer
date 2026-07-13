@@ -144,31 +144,76 @@ publish() {
 }
 
 # Model B: schedule the post out into the future via Zernio, giving a review/veto window.
+# Captures the Zernio post id + resolved image URL (emitted as ZERNIO_* markers by the .ps1)
+# into globals so notify_telegram can build a working Cancel button. Output is re-emitted so
+# it still lands in the cron log.
+ZERNIO_POST_ID=""
+ZERNIO_IMAGE_URL=""
 schedule_post() {
-    local post="$1" img="$2" when="$3" tz="$4"
+    local post="$1" img="$2" when="$3" tz="$4" out
     log "Scheduling LinkedIn post for $when $tz"
     if [ -n "$img" ]; then
-        pwsh -File "$POST_SCRIPT" -Content "$post" -ImagePath "$img" -ScheduledFor "$when" -Timezone "$tz"
+        out=$(pwsh -File "$POST_SCRIPT" -Content "$post" -ImagePath "$img" -ScheduledFor "$when" -Timezone "$tz")
     else
-        pwsh -File "$POST_SCRIPT" -Content "$post" -ScheduledFor "$when" -Timezone "$tz"
+        out=$(pwsh -File "$POST_SCRIPT" -Content "$post" -ScheduledFor "$when" -Timezone "$tz")
     fi
+    local rc=$?
+    printf '%s\n' "$out"                       # keep the human-readable output in the log
+    [ $rc -eq 0 ] || return $rc                # propagate a real scheduling failure
+    ZERNIO_POST_ID=$(printf '%s\n'  "$out" | sed -n 's/^ZERNIO_POST_ID=//p'  | tr -d '\r' | head -1)
+    ZERNIO_IMAGE_URL=$(printf '%s\n' "$out" | sed -n 's/^ZERNIO_IMAGE_URL=//p' | tr -d '\r' | head -1)
 }
 
 # Best-effort phone notification. NEVER aborts the run — the post is already scheduled by the
 # time we notify, so a failed/absent Telegram secret must not turn a good schedule into an error.
+# Sends the image as a real photo (sendPhoto) with the auto-publish time up top and a ❌ Cancel
+# button. The button's callback carries "cancel:<postId>:<epoch>"; the veto bot (telegram_veto_bot.py)
+# deletes the scheduled Zernio post on tap, and refuses once <epoch> has passed (already live).
 notify_telegram() {
-    local text="$1" bot chat
+    local post="$1" img_url="$2" when="$3" tz="$4" hours="$5" post_id="$6"
+    local bot chat epoch header preview budget caption reply_markup base
     bot=$(gcloud secrets versions access latest --secret=linkedin-bot-token --project="$PROJECT" 2>/dev/null) \
         || { log "WARNING: linkedin-bot-token unavailable — skipping Telegram notify"; return 0; }
     chat=$(gcloud secrets versions access latest --secret=telegram-chat-id --project="$PROJECT" 2>/dev/null) \
         || { log "WARNING: telegram-chat-id unavailable — skipping Telegram notify"; return 0; }
-    if curl -s -o /dev/null "https://api.telegram.org/bot${bot}/sendMessage" \
-        --data-urlencode "chat_id=${chat}" \
-        --data-urlencode "text=${text}" \
-        -d disable_web_page_preview=true; then
-        log "Telegram notification sent"
+
+    # Epoch of the scheduled publish instant (interpreted in the same zone we gave Zernio).
+    epoch=$(TZ="$tz" date -d "$when" +%s 2>/dev/null || echo 0)
+
+    # Caption: prominent publish time, then the post preview. Telegram photo captions cap at
+    # 1024 chars; LinkedIn posts run longer, so truncate the preview to fit under the limit.
+    header=$(printf '⏰ Auto-publishes: %s %s (in %sh)\nTap ❌ below to cancel — otherwise it goes live.\n\n' "$when" "$tz" "$hours")
+    preview="$post"
+    budget=$(( 1000 - ${#header} ))
+    if [ ${#preview} -gt $budget ]; then
+        preview="${preview:0:$((budget-34))}…(full text in the scheduled post)"
+    fi
+    caption="${header}${preview}"
+
+    reply_markup=$(printf '{"inline_keyboard":[[{"text":"❌ Cancel this post","callback_data":"cancel:%s:%s"}]]}' "$post_id" "$epoch")
+    base="https://api.telegram.org/bot${bot}"
+
+    if [ -n "$img_url" ] && [ -n "$post_id" ]; then
+        if curl -s -o /dev/null "${base}/sendPhoto" \
+            --data-urlencode "chat_id=${chat}" \
+            --data-urlencode "photo=${img_url}" \
+            --data-urlencode "caption=${caption}" \
+            --data-urlencode "reply_markup=${reply_markup}"; then
+            log "Telegram photo + veto button sent"
+        else
+            log "WARNING: Telegram sendPhoto failed (post is still scheduled)"
+        fi
     else
-        log "WARNING: Telegram send failed (post is still scheduled)"
+        # No image or no post id to cancel — fall back to a text notice (still with a button if we have an id).
+        if curl -s -o /dev/null "${base}/sendMessage" \
+            --data-urlencode "chat_id=${chat}" \
+            --data-urlencode "text=${caption}" \
+            ${post_id:+--data-urlencode "reply_markup=${reply_markup}"} \
+            -d disable_web_page_preview=true; then
+            log "Telegram notification sent"
+        else
+            log "WARNING: Telegram send failed (post is still scheduled)"
+        fi
     fi
     return 0
 }
@@ -198,8 +243,7 @@ if [ -n "$PUBLISH_DRAFT" ]; then
     if [ -z "$PUBLISH_NOW" ] && [ "$A_SCHEDULE_HOURS" != "0" ]; then
         WHEN=$(TZ="$TIMEZONE" date -d "+${A_SCHEDULE_HOURS} hours" '+%Y-%m-%dT%H:%M:%S')
         schedule_post "$POST" "$IMG_PATH" "$WHEN" "$TIMEZONE"
-        notify_telegram "$(printf '📝 LinkedIn post scheduled for %s %s (in %sh).\nAuto-publishes unless you cancel or edit it in Zernio.\n\n%s\n\n(image: %s)' \
-            "$WHEN" "$TIMEZONE" "$A_SCHEDULE_HOURS" "$POST" "${IMG_PATH:-none}")"
+        notify_telegram "$POST" "$ZERNIO_IMAGE_URL" "$WHEN" "$TIMEZONE" "$A_SCHEDULE_HOURS" "$ZERNIO_POST_ID"
         printf '[%s] SCHEDULED draft=%s for=%s %s cost=$0 published=scheduled\n' \
             "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$WHEN" "$TIMEZONE" >> "$COST_LOG"
         log "Done (scheduled saved draft for $WHEN $TIMEZONE, notified). No LLM cost."
@@ -308,8 +352,7 @@ else
     # Wall-clock in TIMEZONE so it matches the -Timezone we pass to Zernio.
     WHEN=$(TZ="$TIMEZONE" date -d "+${SCHEDULE_HOURS} hours" '+%Y-%m-%dT%H:%M:%S')
     schedule_post "$POST" "$IMG_PATH" "$WHEN" "$TIMEZONE"
-    notify_telegram "$(printf '📝 LinkedIn post scheduled for %s %s (in %sh).\nAuto-publishes unless you cancel or edit it in Zernio.\n\n%s\n\n(image: %s)' \
-        "$WHEN" "$TIMEZONE" "$SCHEDULE_HOURS" "$POST" "${IMG_PATH:-none}")"
+    notify_telegram "$POST" "$ZERNIO_IMAGE_URL" "$WHEN" "$TIMEZONE" "$SCHEDULE_HOURS" "$ZERNIO_POST_ID"
     printf '[%s] SCHEDULED draft=%s for=%s %s total=$%s published=scheduled topic="%s"\n' \
         "$(date '+%Y-%m-%d %H:%M:%S')" "$DRAFT" "$WHEN" "$TIMEZONE" "$TOTAL_COST" "$TOPIC" >> "$COST_LOG"
     log "Done (scheduled for $WHEN $TIMEZONE, notified). Total LLM cost: \$$TOTAL_COST"
