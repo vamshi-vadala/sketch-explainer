@@ -1,0 +1,13 @@
+[Unit]
+Description=Weekly trigger for the LinkedIn post pipeline (Sun 20:30 UTC)
+
+[Timer]
+# Same slot as the old local routine (Sun 20:30 UTC). The UTC suffix needs systemd v240+;
+# if `systemctl status` shows a parse error, drop " UTC" and make sure the VM's timezone is
+# UTC (timedatectl set-timezone UTC), or adjust the time to your VM's local zone.
+OnCalendar=Sun *-*-* 20:30:00 UTC
+# If the VM is ever down at the trigger, run as soon as it's back instead of skipping the week.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

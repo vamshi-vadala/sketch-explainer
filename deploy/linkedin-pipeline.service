@@ -1,0 +1,18 @@
+[Unit]
+Description=Weekly LinkedIn post pipeline — generate + schedule (run_scheduled.sh)
+Documentation=https://github.com/vamshi-vadala/sketch-explainer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=vadala_vamshi
+WorkingDirectory=/home/vadala_vamshi/sketch-explainer
+Environment=PROJECT=personalassistant-501418
+# Run through a login shell so gcloud/pwsh/git resolve exactly as they do in the interactive
+# shell where manual runs succeed (avoids systemd's stripped PATH). Output goes to the same
+# log the pipeline has always used.
+ExecStart=/bin/bash -lc './scripts/run_scheduled.sh "generate a post on the latest AI buzz most viewed in the last 3 days" >> /home/vadala_vamshi/linkedin-post.log 2>&1'
+
+[Install]
+WantedBy=multi-user.target
