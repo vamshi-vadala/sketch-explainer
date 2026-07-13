@@ -1,5 +1,9 @@
 # Force LF line endings for shell scripts on all platforms
 *.sh text eol=lf
 
+# Python + systemd units run on the Linux VM — must stay LF (CRLF breaks the shebang/unit)
+*.py text eol=lf
+*.service text eol=lf
+
 # Windows scripts keep CRLF
 *.ps1 text eol=crlf
