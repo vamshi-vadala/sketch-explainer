@@ -86,14 +86,21 @@ Copy the LinkedIn account ID into `config.env`.
 
 Unattended weekly pipeline. A **shell script orchestrates**; the LLM is called only for the two reasoning steps (write copy, design image prompt) — each on **Haiku**, turn-capped, and restricted to read/research tools. Image rendering and publishing are direct `pwsh` calls with fixed arguments, so the LLM never has authority to `git push` or publish. This keeps cost bounded up front (a runaway Opus loop is structurally impossible) and shrinks blast radius.
 
-```bash
-./scripts/run_scheduled.sh "generate a post on latest AI buzz"
+**Generate and publish are separate.** Generation always saves the post + image to `drafts/<slug-timestamp>/`; publishing loads that draft, validates it, and posts it. So you can preview and publish the *same* artifact once — no regenerating a different post for $0.14 you already spent.
 
-DRY_RUN=1 ./scripts/run_scheduled.sh "AI agents"      # run everything except publish; print the draft
+```bash
+./scripts/run_scheduled.sh "generate a post on latest AI buzz"   # generate + validate + publish (cron)
+
+# Review-then-publish — no waste, ships exactly what you saw:
+DRY_RUN=1 ./scripts/run_scheduled.sh "AI agents"      # generate + save draft, do NOT publish
+#   ...eyeball drafts/<dir>/post.txt...
+PUBLISH_DRAFT=drafts/<dir> ./scripts/run_scheduled.sh # post that exact draft — $0, no regeneration
+
 NO_IMAGE=1 ./scripts/run_scheduled.sh "remote work"   # text-only post
 COST_CEILING=0.20 ./scripts/run_scheduled.sh "..."    # circuit-breaker ceiling in $ (default 0.30)
 ```
 
+- **Never ships half-baked:** every publish path runs a content gate first — post length 150–3000 chars, at least one hashtag, not a model refusal, and (if expected) a real, non-tiny image. Any failure aborts before LinkedIn. A stage that runs out of turns (`error_max_turns`) or trips `COST_CEILING` also aborts before publish.
 - **Pause without editing crontab:** `touch scripts/.pipeline-disabled` (delete to resume).
 - **Cost/observability:** every stage appends `turns` + `$cost` to `linkedin-cost.log` (repo root). Use it to tighten `--max-turns` and set a steady-state `COST_CEILING`.
 - **Requires** PowerShell 7 (`pwsh`) and `python3` on the runner (the Linux VM).
