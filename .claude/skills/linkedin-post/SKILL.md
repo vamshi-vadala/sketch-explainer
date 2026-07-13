@@ -9,10 +9,12 @@ Turn any topic into a professional, insight-driven LinkedIn post. Research first
 
 ## Step 1: Research the Topic
 
-Use WebSearch to look up the topic before writing anything. Search for:
+Run **2–3 targeted WebSearch queries** before writing anything — no more. Aim each query at a distinct angle:
 - Recent developments, stats, or news about the topic
 - Expert perspectives or industry consensus
 - A surprising angle, counterintuitive fact, or underappreciated insight
+
+Work from the search result snippets. Only `WebFetch` a full page when a snippet is genuinely insufficient to ground a claim — full pages are the biggest token cost and are rarely needed for a short post.
 
 You're not summarizing search results — you're mining them for one sharp insight that will make the post worth reading.
 

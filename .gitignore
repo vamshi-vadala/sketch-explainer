@@ -5,6 +5,10 @@ config.env
 # Local Claude Code settings
 .claude/settings.local.json
 
+# Scheduled-runner cost log and pause switch
+linkedin-cost.log
+scripts/.pipeline-disabled
+
 # Generated image output
 .claude/skills/sketch-explainer/generated-images/
 .claude/skills/image-generator/generated-images/
