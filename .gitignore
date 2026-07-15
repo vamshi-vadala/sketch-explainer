@@ -1,6 +1,7 @@
-# API keys — never commit
+# API keys / credentials — never commit
 config.env
 .env
+linkedin bot id.txt
 
 # Local Claude Code settings
 .claude/settings.local.json
